@@ -938,23 +938,6 @@ function init() {
             '      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>',
             '    </div>',
             '    <div class="inline-drawer-content">',
-            '      <div class="wa-set-title">生成通道</div>',
-            '      <div class="wa-row">',
-            '        <label class="wa-radio"><input type="radio" name="wa-channel2" data-wa-path="channel" data-wa-value="main"> 主 API（酒馆当前连接）</label>',
-            '        <label class="wa-radio"><input type="radio" name="wa-channel2" data-wa-path="channel" data-wa-value="custom"> 自定义 API</label>',
-            '      </div>',
-            '      <div data-wa-showfor="channel=custom">',
-            '        <input class="text_input" style="width:100%" data-wa-path="custom.baseUrl" placeholder="接口地址，如 https://api.xxx.com/v1">',
-            '        <div class="wa-row" style="margin-top:4px;">',
-            '          <input class="text_input" style="flex:1" type="password" data-wa-path="apiKey" placeholder="API 密钥（明文存于服务器 settings.json，跟随账号）">',
-            '          <button class="wa-mbtn" id="wa-p-models">拉取模型</button>',
-            '          <button class="wa-mbtn" id="wa-p-test">测试连接</button>',
-            '        </div>',
-            '        <div class="wa-row" style="margin-top:4px;">',
-            '          <input class="text_input" style="flex:1" data-wa-path="custom.model" list="wa-model-list" placeholder="模型（可手填或拉取后选）">',
-            '        </div>',
-            '        <div class="wa-status" id="wa-p-test-result"></div>',
-            '      </div>',
             '      <div class="wa-set-title">对话补全预设（防不输出）</div>',
             '      <div class="wa-row">',
             '        <select class="text_input" style="flex:1" id="wa-preset-select"><option value="">— 从酒馆预设列表选择 —</option></select>',
@@ -975,43 +958,20 @@ function init() {
             '      <textarea class="text_input" style="width:100%" rows="6" data-wa-path="refineTemplate"></textarea>',
             '      <div class="wa-row" style="margin-top:4px;">',
             '        <button class="wa-mbtn" id="wa-tpl-reset">恢复全部默认模板</button>',
-            '        <label class="wa-radio"><input type="checkbox" data-wa-path="guideOutput"> 输出引导（无 prefill 预设时生效）</label>',
             '      </div>',
-            '      <div class="wa-set-title">联网搜索</div>',
-            '      <div class="wa-row">',
-            '        <span class="wa-note">模式</span>',
-            '        <select class="text_input" style="flex:1" data-wa-path="web.mode"><option value="off">关（不搜索）</option><option value="trigger">触发词（默认，零开销）</option><option value="auto">智能判断（AI 决定）</option><option value="always">每次都搜</option></select>',
-            '        <select class="text_input" style="flex:1" data-wa-path="web.backend"><option value="searxng">SearXNG</option><option value="tavily">Tavily</option></select>',
-            '      </div>',
-            '      <div class="wa-note">触发词模式：想法里包含触发词才联网，其余情况直接生成、零耗时</div>',
-            '      <div class="wa-note">智能判断模式：每次生成前由模型判断是否需要联网（多一次轻量调用），判断需要才搜——建厂、跑流程这类没触发词但值得查证的任务靠它兜住</div>',
-            '      <div data-wa-showfor="web.mode=trigger">',
-            '        <div class="wa-note">触发词（每行一个，可增删）</div>',
-            '        <textarea class="text_input" style="width:100%" rows="4" data-wa-path="web.triggers"></textarea>',
-            '      </div>',
-            '      <div data-wa-showfor="web.mode=trigger,auto,always">',
-            '        <div data-wa-showfor="web.backend=searxng">',
-            '          <input class="text_input" style="width:100%" data-wa-path="web.searxUrl" placeholder="SearXNG 地址，如 https://searxng.example.com">',
-            '        </div>',
-            '        <div data-wa-showfor="web.backend=tavily" style="margin-top:4px;">',
-            '          <input class="text_input" style="width:100%" type="password" data-wa-path="web.tavilyKey" placeholder="Tavily API 密钥">',
-            '        </div>',
-            '      </div>',
+            '      <div class="wa-set-title">联网搜索细项</div>',
+            '      <div class="wa-note">联网模式、后端、地址与触发关键词在悬窗 ⚙️ 快速设置里配置</div>',
             '      <div class="wa-row" style="margin-top:4px;">',
             '        <span class="wa-note">结果条数</span><input class="text_input" style="width:60px" type="number" min="1" max="15" data-wa-path="web.results" data-num="1">',
             '        <button class="wa-mbtn" id="wa-p-searchtest">测试搜索</button>',
             '      </div>',
             '      <div class="wa-status" id="wa-p-searchtest-result"></div>',
             '      <div class="wa-set-title">通用</div>',
-            '      <div class="wa-row">',
-            '        <span class="wa-note">发送方式</span>',
-            '        <select class="text_input" style="flex:1" data-wa-path="sendMode"><option value="direct">直接发送到剧情</option><option value="draft">先放入输入框（手动发送）</option></select>',
-            '      </div>',
             '      <label class="checkbox_label"><input type="checkbox" id="wa-show-cb" ' + (settings.showButton ? 'checked' : '') + '><span>显示悬浮按钮</span></label>',
             '      <div class="wa-row" style="margin-top:4px;">',
-            '        <button class="wa-mbtn" id="wa-reset-pos">重置窗口位置</button>',
+            '        <button class="wa-mbtn" id="wa-reset-pos">重置窗口位置（含尺寸）</button>',
             '      </div>',
-            '      <div class="wa-note">生成走 SillyTavern 核心 generateRaw（纯净通道）或自定义 API；悬窗 ⚙️ 里有高频快改，两边配置实时同步。快捷键 Alt+K。</div>',
+            '      <div class="wa-note">生成走 SillyTavern 核心 generateRaw（纯净通道）或自定义 API；日常操作在右下角悬窗 ⚙️，快捷键 Alt+K。</div>',
             '    </div>',
             '  </div>',
             '</div>'
@@ -1024,20 +984,6 @@ function init() {
             saveSettingsDebounced();
         });
         q('#wa-reset-pos')?.addEventListener('click', resetPos);
-
-        q('#wa-p-test')?.addEventListener('click', () => testConnection(q('#wa-p-test-result')));
-        q('#wa-p-models')?.addEventListener('click', async () => {
-            const r = q('#wa-p-test-result');
-            r.textContent = '拉取模型中…';
-            try {
-                const ids = await fetchModels();
-                datalist.innerHTML = ids.map((m) => '<option value="' + escapeHtml(m) + '">').join('');
-                if (!settings.custom.model && ids.length) { settings.custom.model = ids[0]; saveSettingsDebounced(); syncAll(); }
-                r.textContent = '✓ 已拉取 ' + ids.length + ' 个模型';
-            } catch (e) {
-                r.textContent = '✗ ' + String((e && e.message) || e);
-            }
-        });
 
         // 预设
         const presetSelect = q('#wa-preset-select');
