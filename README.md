@@ -64,9 +64,6 @@ SillyTavern/data/<你的用户名>/extensions/whale-advisor/
 
 见 [CHANGELOG.md](CHANGELOG.md)。发布仓库与 manifest 版本号同步打 tag。
 
-## 素材致谢
-
-悬窗形象：Q版鲸鱼娘，来自 [dafy-whale-theme](https://github.com/DViridescent/dafy-whale-theme)（MIT License，版权声明见 `assets/CREDITS`）。
 
 ## 许可
 

@@ -6,8 +6,6 @@ import { extension_settings, getContext } from '../../../extensions.js';
 import { saveSettingsDebounced, generateRaw, getRequestHeaders, substituteParams } from '../../../../script.js';
 
 const MODULE = 'whale-advisor';
-const PET_IDLE = new URL('assets/fish-idle.png', import.meta.url).href;
-const PET_HAPPY = new URL('assets/fish-happy.png', import.meta.url).href;
 
 const DEFAULT_SYS = '你是当前角色卡的幕后参谋助手（元助手），不是卡里的角色本人。不要扮演角色推进剧情，不要输出 <StatusPlaceHolderImpl/>、<UpdateVariable> 或任何标签；只完成当前交给你的元任务。';
 const DEFAULT_ASK = '任务：当前卡片「{角色}」的玩家（老板）在问：下一步推荐做什么。\n\n当前状态（仅作参考，严禁写进输出）：{状态}\n\n最近剧情：\n{剧情}\n{搜索}\n要求：\n- 只输出 2~3 个下一步行动建议，每条一行，以 - 开头\n- 每条具体可执行，带数字（金额/天数/数量/目标），符合当前现金与时间量级\n- 不要复述状态、变量或任何键值对\n- 最后一行用一句话问选哪个\n- 全文不超过 160 字';
@@ -488,8 +486,10 @@ function init() {
     const btn = document.createElement('div');
     btn.id = 'wa-btn';
     btn.title = '参谋·鲸鲸（Alt+K）';
-    btn.innerHTML = '<img class="wa-pet-img" alt="参谋鲸鲸" draggable="false"><div class="wa-pet-rice">🍚</div>';
+    btn.textContent = '🐋';
     btn.style.display = settings.showButton ? '' : 'none';
+    // 素材加载失败兜底：回退为 🐋 emoji，不留破图
+
 
     const panel = document.createElement('div');
     panel.id = 'wa-panel';
@@ -597,7 +597,6 @@ function init() {
                 if (sent === true) {
                     optionsEl.style.display = 'none';
                     optionsEl.innerHTML = '';
-                    petHappy();
                     setStatus('已发送选项，鲸鲸处理中…', 'ok');
                 } else if (sent === 'draft') {
                     setStatus('选项已放入输入框，可修改后手动发送', 'ok');
@@ -622,26 +621,7 @@ function init() {
     } catch (e) {}
     updateTitle();
     function refreshState() { stateEl.textContent = stateLineText(); }
-    function setBusy(busy) {
-        [askBtn, refineBtn, clearBtn, sendBtn].forEach((b) => { b.disabled = busy; });
-        // 桌宠状态：生成中=扒饭（摇摆+饭碗），空闲=漂浮
-        if (busy) petState('wa-pet--work');
-        else petState('wa-pet--idle');
-    }
-    function petState(cls) {
-        btn.classList.remove('wa-pet--work', 'wa-pet--happy', 'wa-pet--drag');
-        if (cls) btn.classList.add(cls);
-    }
-    function petFace(face) {
-        const img = btn.querySelector('.wa-pet-img');
-        if (img) img.src = face === 'happy' ? PET_HAPPY : PET_IDLE;
-    }
-    function petHappy() {
-        petFace('happy');
-        petState('wa-pet--happy');
-        clearTimeout(petHappy._t);
-        petHappy._t = setTimeout(() => { petFace('idle'); petState('wa-pet--idle'); }, 1500);
-    }
+    function setBusy(busy) { [askBtn, refineBtn, clearBtn, sendBtn].forEach((b) => { b.disabled = busy; }); }
     function showView(quick) {
         viewQuick.style.display = quick ? '' : 'none';
         viewMain.style.display = quick ? 'none' : '';
@@ -675,7 +655,7 @@ function init() {
     const coarseMQ = window.matchMedia('(pointer: coarse)');
     function isCoarseNow() { return coarseMQ.matches || window.innerWidth <= 768; }
     function defaultBtnPos() {
-        return { l: Math.max(8, window.innerWidth - 70), t: Math.max(8, window.innerHeight - (isCoarseNow() ? 152 : 78)) };
+        return { l: Math.max(8, window.innerWidth - 54), t: Math.max(8, window.innerHeight - (isCoarseNow() ? 138 : 64)) };
     }
     function applyBtnPos() {
         if (!loadPos(btn, 'wa-pos-btn')) {
@@ -794,7 +774,7 @@ function init() {
     });
     layoutMO.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
     layoutMO.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
-    function makeDraggable(handle, target, key, hooks) {
+    function makeDraggable(handle, target, key) {
         let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false, moved = false;
         const down = (x, y) => {
             dragging = true; moved = false; sx = x; sy = y;
@@ -802,7 +782,6 @@ function init() {
             target.style.right = 'auto'; target.style.bottom = 'auto';
             target.style.left = r.left + 'px'; target.style.top = r.top + 'px';
             ox = r.left; oy = r.top;
-            if (hooks?.start) hooks.start();
         };
         const move = (x, y) => {
             if (!dragging) return;
@@ -810,7 +789,7 @@ function init() {
             target.style.left = Math.max(0, ox + x - sx) + 'px';
             target.style.top = Math.max(0, oy + y - sy) + 'px';
         };
-        const up = () => { if (dragging) { dragging = false; clampIntoView(target); savePos(target, key); if (hooks?.end) hooks.end(); } };
+        const up = () => { if (dragging) { dragging = false; clampIntoView(target); savePos(target, key); } };
         // Pointer Events：鼠标与触屏统一；touch-action:none 由 CSS 提供
         handle.addEventListener('pointerdown', (e) => { down(e.clientX, e.clientY); e.preventDefault(); });
         document.addEventListener('pointermove', (e) => move(e.clientX, e.clientY));
@@ -818,16 +797,11 @@ function init() {
         document.addEventListener('pointercancel', up);
         return () => moved;
     }
-    const btnDragged = makeDraggable(btn, btn, 'wa-pos-btn', {
-        start: () => petState('wa-pet--drag'),
-        end: () => petState('wa-pet--idle'),
-    });
+    const btnDragged = makeDraggable(btn, btn, 'wa-pos-btn');
     makeDraggable($id('wa-drag'), panel, 'wa-pos-panel');
     makeResizable($id('wa-resize'));
     makeSplitDraggable($id('wa-divider'));
     loadPanelSize();
-    petState('wa-pet--idle');
-    try { new Image().src = PET_HAPPY; } catch (e) {}
     requestAnimationFrame(applySplit);
 
     btn.addEventListener('click', () => {
@@ -986,7 +960,6 @@ function init() {
             inputEl.value = ''; resultEl.value = '';
             renderOptions('');
             resultEl.style.display = ''; sendRow.style.display = '';
-            petHappy();
             setStatus('已发送，等回复中…', 'ok');
         } else if (sent === 'draft') {
             setStatus('已放入输入框，可修改后手动发送', 'ok');
