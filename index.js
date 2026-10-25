@@ -545,8 +545,6 @@ function init() {
         '    <label class="wa-radio"><input type="checkbox" data-wa-path="guideOutput"> 输出引导</label>',
         '  </div>',
         '  <select class="wa-in" data-wa-path="sendMode"><option value="direct">发送：直接进剧情</option><option value="draft">发送：先放入输入框</option></select>',
-        '  </div>',
-        '  <div class="wa-note">模板与对话补全预设、搜索后端细项在 扩展面板 → 参谋·鲸鲸 里配置。</div>',
         '</div>'
     ].join('\n');
     document.body.appendChild(btn);
