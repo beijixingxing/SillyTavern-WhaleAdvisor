@@ -2,6 +2,10 @@
 
 版本号与 manifest.json 同步，每个版本对应一个 git tag。
 
+## 1.3.15
+
+- 修复：manifest 补回 auto_update 与 minimum_client_version（1.3.14 曾被开发版 manifest 覆盖丢失）；两份 manifest 自此内容完全一致
+
 ## 1.3.14
 
 - homePage 指向正式仓库 SillyTavern-WhaleAdvisor
