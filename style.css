@@ -157,6 +157,12 @@
     color: #7cc7ff;
 }
 
+/* 结果框为弹性项：面板拖高时自动撑满，拖矮时按最小高度并内部滚动 */
+#wa-panel #wa-result {
+    flex: 1 1 auto;
+    min-height: 120px;
+}
+
 /* 移动端适配：触控目标加大（定位由 JS 计算，这里只管尺寸） */
 @media (max-width: 768px), (pointer: coarse) {
     #wa-btn {
