@@ -101,6 +101,12 @@
     opacity: 1;
 }
 
+#wa-panel .wa-note {
+    font-size: 10px;
+    opacity: .6;
+    line-height: 1.4;
+}
+
 #wa-panel .wa-set-title {
     font-weight: 700;
     color: #e8f2ff;
