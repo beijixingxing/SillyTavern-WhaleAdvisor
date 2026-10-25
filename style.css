@@ -49,7 +49,8 @@
 }
 
 #wa-panel.open {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 #wa-panel .wa-head {
@@ -105,9 +106,32 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: calc(80vh - 44px);
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    max-height: calc(80vh - 44px);
+}
+
+/* 面板尺寸调整把手（右下角） */
+#wa-panel .wa-resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    cursor: nwse-resize;
+    touch-action: none;
+    color: #56749c;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    user-select: none;
+    z-index: 1;
+}
+
+#wa-panel .wa-resize:hover {
+    color: #7cc7ff;
 }
 
 /* 移动端适配：触控目标加大（定位由 JS 计算，这里只管尺寸） */

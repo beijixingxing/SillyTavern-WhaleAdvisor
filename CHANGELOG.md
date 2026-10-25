@@ -2,6 +2,10 @@
 
 版本号与 manifest.json 同步，每个版本对应一个 git tag。
 
+## 1.3.17
+
+- 悬窗面板支持尺寸调整：右下角 ⤡ 把手拖拽宽高，尺寸记忆；重置窗口位置一并恢复默认尺寸
+
 ## 1.3.16
 
 - 修复 macOS 快捷键不生效：改用物理键位 e.code 判断（macOS 上 Option+K 的 e.key 是特殊字符），Windows Alt+K / macOS ⌥K 均可用

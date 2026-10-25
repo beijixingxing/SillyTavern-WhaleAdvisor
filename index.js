@@ -510,6 +510,7 @@ function init() {
         '  <div class="wa-row" id="wa-send-row"><button class="wa-btn accent" id="wa-send">🚀 直接发送到剧情</button></div>',
         '  <div class="wa-status" id="wa-status">待机：Alt+K 唤起 · ⚙️ 快速设置</div>',
         '</div>',
+        '<div class="wa-resize" id="wa-resize" title="拖动调整大小">⤡</div>',
         '<div class="wa-body" id="wa-view-quick" style="display:none">',
         '  <div class="wa-set-title">生成通道</div>',
         '  <div class="wa-row">',
@@ -674,9 +675,47 @@ function init() {
         if (!loadPos(panel, 'wa-pos-panel')) placePanelDefault();
         else requestAnimationFrame(() => clampIntoView(panel));
     }
+    // 面板尺寸：右下角把手拖拽，宽高可调并记忆
+    function loadPanelSize() {
+        try {
+            const raw = localStorage.getItem('wa-size-panel');
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (s.w && s.h) applyPanelSize(s.w, s.h);
+        } catch (e) {}
+    }
+    function applyPanelSize(w, h) {
+        const mw = Math.max(240, window.innerWidth - 16);
+        const mh = Math.max(180, window.innerHeight - 24);
+        panel.style.width = Math.min(w, mw) + 'px';
+        panel.style.height = Math.min(h, mh) + 'px';
+        const body = panel.querySelector('.wa-body');
+        if (body) body.style.maxHeight = 'none'; // 固定高度下由面板自身滚动
+    }
+    function makeResizable(handle) {
+        let sx = 0, sy = 0, sw = 0, sh = 0, sizing = false;
+        handle.addEventListener('pointerdown', (e) => {
+            sizing = true; sx = e.clientX; sy = e.clientY;
+            const r = panel.getBoundingClientRect();
+            sw = r.width; sh = r.height;
+            e.preventDefault(); e.stopPropagation();
+        });
+        document.addEventListener('pointermove', (e) => {
+            if (!sizing) return;
+            applyPanelSize(sw + e.clientX - sx, sh + e.clientY - sy);
+        });
+        document.addEventListener('pointerup', () => {
+            if (!sizing) return;
+            sizing = false;
+            try { localStorage.setItem('wa-size-panel', JSON.stringify({ w: panel.style.width, h: panel.style.height })); } catch (err) {}
+        });
+    }
     function resetPos() {
-        try { localStorage.removeItem('wa-pos-btn'); localStorage.removeItem('wa-pos-panel'); } catch (e) {}
+        try { localStorage.removeItem('wa-pos-btn'); localStorage.removeItem('wa-pos-panel'); localStorage.removeItem('wa-size-panel'); } catch (e) {}
         panel.style.left = ''; panel.style.top = '';
+        panel.style.width = ''; panel.style.height = '';
+        const pbody = panel.querySelector('.wa-body');
+        if (pbody) pbody.style.maxHeight = '';
         const d = defaultBtnPos();
         btn.style.left = d.l + 'px'; btn.style.top = d.t + 'px';
     }
@@ -715,6 +754,8 @@ function init() {
     }
     const btnDragged = makeDraggable(btn, btn, 'wa-pos-btn');
     makeDraggable($id('wa-drag'), panel, 'wa-pos-panel');
+    makeResizable($id('wa-resize'));
+    loadPanelSize();
 
     btn.addEventListener('click', () => {
         if (btnDragged()) return;
