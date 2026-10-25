@@ -2,6 +2,10 @@
 
 版本号与 manifest.json 同步，每个版本对应一个 git tag。
 
+## 1.3.14
+
+- homePage 指向正式仓库 SillyTavern-WhaleAdvisor
+
 ## 1.3.13
 
 - 发送按钮文案跟随发送方式：草稿模式显示「📝 放入输入框」，直接模式显示「🚀 直接发送到剧情」
