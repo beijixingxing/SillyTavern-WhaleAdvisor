@@ -15,6 +15,7 @@ const OUTPUT_RULE = '\n\n【输出格式·必须遵守】第一行输出 <<<JX>>
 const DEFAULTS = {
     showButton: true,
     channel: 'main',
+    sendMode: 'direct',
     custom: { baseUrl: '', model: '' },
     apiKey: '',
     guideOutput: true,
@@ -466,18 +467,18 @@ function buildTaskPrompt(kind, idea, searchBlock) {
 
 // ---------- 发送 ----------
 async function sendMessage(text) {
+    const ta = document.querySelector('#send_textarea');
+    const btn = document.querySelector('#send_but');
+    if (!ta || !btn) return false;
+    ta.value = text;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    // 草稿模式：只放入输入框，聚焦不发送
+    if (settings.sendMode === 'draft') { ta.focus(); return 'draft'; }
     // 生成中酒馆的发送键变为「停止」，此时点按会误停生成——先检测停止按钮状态
     const stopBtn = document.querySelector('#mes_stop');
     if (stopBtn && stopBtn.style.display !== 'none') return 'busy';
-    const ta = document.querySelector('#send_textarea');
-    const btn = document.querySelector('#send_but');
-    if (ta && btn) {
-        ta.value = text;
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
-        btn.click();
-        return true;
-    }
-    return false;
+    btn.click();
+    return true;
 }
 
 // ---------- UI ----------
@@ -531,6 +532,7 @@ function init() {
         '    <select class="wa-in" data-wa-path="web.mode"><option value="off">联网: 关</option><option value="trigger">联网: 触发词</option><option value="auto">联网: 智能判断</option><option value="always">联网: 每次都搜</option></select>',
         '    <label class="wa-radio"><input type="checkbox" data-wa-path="guideOutput"> 输出引导</label>',
         '  </div>',
+        '  <select class="wa-in" data-wa-path="sendMode"><option value="direct">发送：直接进剧情</option><option value="draft">发送：先放入输入框</option></select>',
         '  <div data-wa-showfor="web.mode=trigger,auto,always">',
         '    <select class="wa-in" data-wa-path="web.backend"><option value="searxng">SearXNG</option><option value="tavily">Tavily</option></select>',
         '    <div data-wa-showfor="web.backend=searxng">',
@@ -585,6 +587,8 @@ function init() {
                     optionsEl.style.display = 'none';
                     optionsEl.innerHTML = '';
                     setStatus('已发送选项，鲸鲸处理中…', 'ok');
+                } else if (sent === 'draft') {
+                    setStatus('选项已放入输入框，可修改后手动发送', 'ok');
                 } else if (sent === 'busy') {
                     setStatus('酒馆正在生成中，稍候再发（本次未发送）', 'err');
                 } else {
@@ -865,7 +869,10 @@ function init() {
         if (sent === true) {
             inputEl.value = ''; resultEl.value = '';
             renderOptions('');
+            resultEl.style.display = ''; sendRow.style.display = '';
             setStatus('已发送，等回复中…', 'ok');
+        } else if (sent === 'draft') {
+            setStatus('已放入输入框，可修改后手动发送', 'ok');
         } else if (sent === 'busy') {
             setStatus('酒馆正在生成中，稍候再发（本次未发送）', 'err');
         } else {
@@ -949,6 +956,10 @@ function init() {
             '      </div>',
             '      <div class="wa-status" id="wa-p-searchtest-result"></div>',
             '      <div class="wa-set-title">通用</div>',
+            '      <div class="wa-row">',
+            '        <span class="wa-note">发送方式</span>',
+            '        <select class="text_input" style="flex:1" data-wa-path="sendMode"><option value="direct">直接发送到剧情</option><option value="draft">先放入输入框（手动发送）</option></select>',
+            '      </div>',
             '      <label class="checkbox_label"><input type="checkbox" id="wa-show-cb" ' + (settings.showButton ? 'checked' : '') + '><span>显示悬浮按钮</span></label>',
             '      <div class="wa-row" style="margin-top:4px;">',
             '        <button class="wa-mbtn" id="wa-reset-pos">重置窗口位置</button>',
