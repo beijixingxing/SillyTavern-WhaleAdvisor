@@ -975,7 +975,16 @@ function init() {
         // 预设
         const presetSelect = q('#wa-preset-select');
         const presetInfo = q('#wa-preset-info');
-        function refreshPresetInfo() { presetInfo.textContent = presetSummary(); }
+        function applyAndShowTemplates(source) {
+            const applied = applyPresetTemplates(source);
+            // 直接写入三个模板框，不依赖间接同步；改完后随时可编辑
+            for (const k of ['sysPreset', 'askTemplate', 'refineTemplate']) {
+                const el = q('[data-wa-path="' + k + '"]');
+                if (el) el.value = settings[k];
+            }
+            return applied;
+        }
+        function refreshPresetInfo(extra) { presetInfo.textContent = presetSummary() + (extra ? ' ｜ ' + extra : ''); }
         loadTavernPresets().then((map) => {
             const opts = ['<option value="">— 从酒馆预设列表选择 —</option>'];
             for (const name of map.keys()) opts.push('<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>');
@@ -989,10 +998,9 @@ function init() {
             if (!content) return;
             settings.presetName = name;
             settings.presetJson = content;
-            applyPresetTemplates(content);
-            syncAll();
+            const applied = applyAndShowTemplates(content);
             saveSettingsDebounced();
-            refreshPresetInfo();
+            refreshPresetInfo(applied ? '✓ 预设的参谋模板已填入下方三框，可继续编辑' : '预设不含 whale_advisor 模板，三框保持当前值');
         });
         q('#wa-preset-file')?.addEventListener('change', (e) => {
             const f = e.target.files?.[0];
@@ -1003,10 +1011,9 @@ function init() {
                     const obj = JSON.parse(String(reader.result));
                     settings.presetJson = obj;
                     settings.presetName = f.name.replace(/\.json$/i, '');
-                    applyPresetTemplates(obj);
-                    syncAll();
+                    const applied = applyAndShowTemplates(obj);
                     saveSettingsDebounced();
-                    refreshPresetInfo();
+                    refreshPresetInfo(applied ? '✓ 预设的参谋模板已填入下方三框，可继续编辑' : '预设不含 whale_advisor 模板，三框保持当前值');
                 } catch (err) {
                     presetInfo.textContent = '✗ JSON 解析失败：' + String((err && err.message) || err);
                 }
