@@ -6,6 +6,8 @@ import { extension_settings, getContext } from '../../../extensions.js';
 import { saveSettingsDebounced, generateRaw, getRequestHeaders, substituteParams } from '../../../../script.js';
 
 const MODULE = 'whale-advisor';
+const PET_IDLE = new URL('assets/fish-idle.png', import.meta.url).href;
+const PET_HAPPY = new URL('assets/fish-happy.png', import.meta.url).href;
 
 const DEFAULT_SYS = '你是当前角色卡的幕后参谋助手（元助手），不是卡里的角色本人。不要扮演角色推进剧情，不要输出 <StatusPlaceHolderImpl/>、<UpdateVariable> 或任何标签；只完成当前交给你的元任务。';
 const DEFAULT_ASK = '任务：当前卡片「{角色}」的玩家（老板）在问：下一步推荐做什么。\n\n当前状态（仅作参考，严禁写进输出）：{状态}\n\n最近剧情：\n{剧情}\n{搜索}\n要求：\n- 只输出 2~3 个下一步行动建议，每条一行，以 - 开头\n- 每条具体可执行，带数字（金额/天数/数量/目标），符合当前现金与时间量级\n- 不要复述状态、变量或任何键值对\n- 最后一行用一句话问选哪个\n- 全文不超过 160 字';
@@ -486,7 +488,7 @@ function init() {
     const btn = document.createElement('div');
     btn.id = 'wa-btn';
     btn.title = '参谋·鲸鲸（Alt+K）';
-    btn.textContent = '🐋';
+    btn.innerHTML = '<img class="wa-pet-img" alt="参谋鲸鲸" draggable="false"><div class="wa-pet-rice">🍚</div>';
     btn.style.display = settings.showButton ? '' : 'none';
 
     const panel = document.createElement('div');
@@ -499,13 +501,16 @@ function init() {
         '</div>',
         '<div class="wa-body" id="wa-view-main">',
         '  <div class="wa-state" id="wa-state">读取变量中…</div>',
+        '  <div id="wa-textareas">',
         '  <textarea class="wa-ta" id="wa-input" rows="3" placeholder="把想法丢进来，比如：想自研大模型，对标旗舰。留空也可以直接问下一步。"></textarea>',
         '  <div class="wa-row">',
         '    <button class="wa-btn" id="wa-ask">🎯 问下一步</button>',
         '    <button class="wa-btn" id="wa-refine">✨ 帮我完善</button>',
         '    <button class="wa-btn" id="wa-clear" style="flex:0 0 44px;">清空</button>',
         '  </div>',
+        '  <div class="wa-divider" id="wa-divider" title="拖动：调整输入框与推演框的高度分配"><span></span></div>',
         '  <textarea class="wa-ta" id="wa-result" rows="6" placeholder="参谋的推演会落在这里，可随意编辑，点下面直接发出"></textarea>',
+        '  </div>',
         '  <div id="wa-options" style="display:none;flex-direction:column;gap:6px;"></div>',
         '  <div class="wa-row" id="wa-send-row"><button class="wa-btn accent" id="wa-send">🚀 直接发送到剧情</button></div>',
         '  <div class="wa-status" id="wa-status">待机：Alt+K 唤起 · ⚙️ 快速设置</div>',
@@ -592,6 +597,7 @@ function init() {
                 if (sent === true) {
                     optionsEl.style.display = 'none';
                     optionsEl.innerHTML = '';
+                    petHappy();
                     setStatus('已发送选项，鲸鲸处理中…', 'ok');
                 } else if (sent === 'draft') {
                     setStatus('选项已放入输入框，可修改后手动发送', 'ok');
@@ -616,7 +622,26 @@ function init() {
     } catch (e) {}
     updateTitle();
     function refreshState() { stateEl.textContent = stateLineText(); }
-    function setBusy(busy) { [askBtn, refineBtn, clearBtn, sendBtn].forEach((b) => { b.disabled = busy; }); }
+    function setBusy(busy) {
+        [askBtn, refineBtn, clearBtn, sendBtn].forEach((b) => { b.disabled = busy; });
+        // 桌宠状态：生成中=扒饭（摇摆+饭碗），空闲=漂浮
+        if (busy) petState('wa-pet--work');
+        else petState('wa-pet--idle');
+    }
+    function petState(cls) {
+        btn.classList.remove('wa-pet--work', 'wa-pet--happy', 'wa-pet--drag');
+        if (cls) btn.classList.add(cls);
+    }
+    function petFace(face) {
+        const img = btn.querySelector('.wa-pet-img');
+        if (img) img.src = face === 'happy' ? PET_HAPPY : PET_IDLE;
+    }
+    function petHappy() {
+        petFace('happy');
+        petState('wa-pet--happy');
+        clearTimeout(petHappy._t);
+        petHappy._t = setTimeout(() => { petFace('idle'); petState('wa-pet--idle'); }, 1500);
+    }
     function showView(quick) {
         viewQuick.style.display = quick ? '' : 'none';
         viewMain.style.display = quick ? 'none' : '';
@@ -650,7 +675,7 @@ function init() {
     const coarseMQ = window.matchMedia('(pointer: coarse)');
     function isCoarseNow() { return coarseMQ.matches || window.innerWidth <= 768; }
     function defaultBtnPos() {
-        return { l: Math.max(8, window.innerWidth - 54), t: Math.max(8, window.innerHeight - (isCoarseNow() ? 138 : 64)) };
+        return { l: Math.max(8, window.innerWidth - 70), t: Math.max(8, window.innerHeight - (isCoarseNow() ? 152 : 78)) };
     }
     function applyBtnPos() {
         if (!loadPos(btn, 'wa-pos-btn')) {
@@ -663,6 +688,7 @@ function init() {
     function onLayoutChange() {
         applyBtnPos();
         if (panel.classList.contains('open')) clampIntoView(panel);
+        requestAnimationFrame(applySplit);
     }
     function placePanelDefault() {
         // 面板可见后按按钮位置计算默认落点（右对齐、在按钮上方；放不下则按钮下方）
@@ -680,6 +706,39 @@ function init() {
         if (!loadPos(panel, 'wa-pos-panel')) placePanelDefault();
         else requestAnimationFrame(() => clampIntoView(panel));
     }
+    // 输入/推演高度分配：分隔条拖动设定输入框高度（比例记忆），推演框弹性补满
+    let splitRatio = (() => {
+        try { const v = parseFloat(localStorage.getItem('wa-split-main')); if (isFinite(v) && v > 0.1 && v < 0.85) return v; } catch (e) {}
+        return 0.38;
+    })();
+    function applySplit() {
+        const c = $id('wa-textareas');
+        if (!c) return;
+        const avail = c.clientHeight - 12 - 16; // 分隔条 + 间距
+        if (avail < 160) return; // 面板未渲染或过小时跳过
+        const h = Math.max(48, Math.min(avail - 90, Math.round(avail * splitRatio)));
+        inputEl.style.height = h + 'px';
+    }
+    function makeSplitDraggable(handle) {
+        let sy = 0, sh = 0, dragging = false;
+        handle.addEventListener('pointerdown', (e) => {
+            dragging = true; sy = e.clientY; sh = inputEl.offsetHeight;
+            e.preventDefault();
+        });
+        document.addEventListener('pointermove', (e) => {
+            if (!dragging) return;
+            const c = $id('wa-textareas');
+            const avail = c.clientHeight - 12 - 16;
+            const h = Math.max(48, Math.min(avail - 90, sh + e.clientY - sy));
+            inputEl.style.height = h + 'px';
+            if (avail > 0) splitRatio = h / avail;
+        });
+        document.addEventListener('pointerup', () => {
+            if (!dragging) return;
+            dragging = false;
+            try { localStorage.setItem('wa-split-main', String(splitRatio)); } catch (e) {}
+        });
+    }
     // 面板尺寸：右下角把手拖拽，宽高可调并记忆
     function loadPanelSize() {
         try {
@@ -696,6 +755,7 @@ function init() {
         panel.style.height = Math.min(h, mh) + 'px';
         const body = panel.querySelector('.wa-body');
         if (body) body.style.maxHeight = 'none'; // 固定高度下由面板自身滚动
+        requestAnimationFrame(applySplit);
     }
     function makeResizable(handle) {
         let sx = 0, sy = 0, sw = 0, sh = 0, sizing = false;
@@ -734,7 +794,7 @@ function init() {
     });
     layoutMO.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
     layoutMO.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
-    function makeDraggable(handle, target, key) {
+    function makeDraggable(handle, target, key, hooks) {
         let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false, moved = false;
         const down = (x, y) => {
             dragging = true; moved = false; sx = x; sy = y;
@@ -742,6 +802,7 @@ function init() {
             target.style.right = 'auto'; target.style.bottom = 'auto';
             target.style.left = r.left + 'px'; target.style.top = r.top + 'px';
             ox = r.left; oy = r.top;
+            if (hooks?.start) hooks.start();
         };
         const move = (x, y) => {
             if (!dragging) return;
@@ -749,7 +810,7 @@ function init() {
             target.style.left = Math.max(0, ox + x - sx) + 'px';
             target.style.top = Math.max(0, oy + y - sy) + 'px';
         };
-        const up = () => { if (dragging) { dragging = false; clampIntoView(target); savePos(target, key); } };
+        const up = () => { if (dragging) { dragging = false; clampIntoView(target); savePos(target, key); if (hooks?.end) hooks.end(); } };
         // Pointer Events：鼠标与触屏统一；touch-action:none 由 CSS 提供
         handle.addEventListener('pointerdown', (e) => { down(e.clientX, e.clientY); e.preventDefault(); });
         document.addEventListener('pointermove', (e) => move(e.clientX, e.clientY));
@@ -757,15 +818,22 @@ function init() {
         document.addEventListener('pointercancel', up);
         return () => moved;
     }
-    const btnDragged = makeDraggable(btn, btn, 'wa-pos-btn');
+    const btnDragged = makeDraggable(btn, btn, 'wa-pos-btn', {
+        start: () => petState('wa-pet--drag'),
+        end: () => petState('wa-pet--idle'),
+    });
     makeDraggable($id('wa-drag'), panel, 'wa-pos-panel');
     makeResizable($id('wa-resize'));
+    makeSplitDraggable($id('wa-divider'));
     loadPanelSize();
+    petState('wa-pet--idle');
+    try { new Image().src = PET_HAPPY; } catch (e) {}
+    requestAnimationFrame(applySplit);
 
     btn.addEventListener('click', () => {
         if (btnDragged()) return;
         const open = panel.classList.toggle('open');
-        if (open) { showView(false); updateTitle(); refreshState(); placePanel(); setStatus('待机：Alt+K 唤起 · ⚙️ 快速设置'); }
+        if (open) { showView(false); updateTitle(); refreshState(); placePanel(); requestAnimationFrame(applySplit); setStatus('待机：Alt+K 唤起 · ⚙️ 快速设置'); }
     });
     closeBtn.addEventListener('click', () => panel.classList.remove('open'));
     document.addEventListener('keydown', (e) => {
@@ -773,7 +841,7 @@ function init() {
         if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyK') {
             e.preventDefault();
             if (panel.classList.contains('open')) { panel.classList.remove('open'); }
-            else { panel.classList.add('open'); showView(false); updateTitle(); refreshState(); placePanel(); setStatus('待机'); }
+            else { panel.classList.add('open'); showView(false); updateTitle(); refreshState(); placePanel(); requestAnimationFrame(applySplit); setStatus('待机'); }
         }
     }, true);
 
@@ -918,6 +986,7 @@ function init() {
             inputEl.value = ''; resultEl.value = '';
             renderOptions('');
             resultEl.style.display = ''; sendRow.style.display = '';
+            petHappy();
             setStatus('已发送，等回复中…', 'ok');
         } else if (sent === 'draft') {
             setStatus('已放入输入框，可修改后手动发送', 'ok');
