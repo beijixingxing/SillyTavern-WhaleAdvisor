@@ -723,7 +723,8 @@ function init() {
     });
     closeBtn.addEventListener('click', () => panel.classList.remove('open'));
     document.addEventListener('keydown', (e) => {
-        if (e.altKey && (e.key === 'k' || e.key === 'K')) {
+        // 用物理键位 e.code 判断：macOS 上 Option+K 的 e.key 是特殊字符"˚"，用 e.key 会永远不命中
+        if (e.altKey && !e.ctrlKey && !e.metaKey && e.code === 'KeyK') {
             e.preventDefault();
             if (panel.classList.contains('open')) { panel.classList.remove('open'); }
             else { panel.classList.add('open'); showView(false); updateTitle(); refreshState(); placePanel(); setStatus('待机'); }
