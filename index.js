@@ -732,6 +732,7 @@ function init() {
 
     // ---------- 设置绑定（双视图同步） ----------
     function syncAll(except) {
+        if (sendBtn) sendBtn.textContent = settings.sendMode === 'draft' ? '📝 放入输入框' : '🚀 直接发送到剧情';
         document.querySelectorAll('[data-wa-path]').forEach((el) => {
             if (el === except) return;
             if (el.type === 'radio') return;
