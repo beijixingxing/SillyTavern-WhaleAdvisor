@@ -101,6 +101,15 @@
     opacity: 1;
 }
 
+#wa-panel .wa-set-title {
+    font-weight: 700;
+    color: #e8f2ff;
+    font-size: 12px;
+    letter-spacing: .5px;
+    border-bottom: 1px solid #16233c;
+    padding-bottom: 4px;
+}
+
 #wa-panel .wa-body {
     padding: 10px 12px;
     display: flex;

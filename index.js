@@ -529,11 +529,8 @@ function init() {
         '    </div>',
         '    <div class="wa-status" id="wa-quick-test-result"></div>',
         '  </div>',
-        '  <div class="wa-row">',
-        '    <select class="wa-in" data-wa-path="web.mode"><option value="off">联网: 关</option><option value="trigger">联网: 触发词</option><option value="auto">联网: 智能判断</option><option value="always">联网: 每次都搜</option></select>',
-        '    <label class="wa-radio"><input type="checkbox" data-wa-path="guideOutput"> 输出引导</label>',
-        '  </div>',
-        '  <select class="wa-in" data-wa-path="sendMode"><option value="direct">发送：直接进剧情</option><option value="draft">发送：先放入输入框</option></select>',
+        '  <div class="wa-set-title">联网搜索</div>',
+        '  <select class="wa-in" data-wa-path="web.mode"><option value="off">联网: 关</option><option value="trigger">联网: 触发词</option><option value="auto">联网: 智能判断</option><option value="always">联网: 每次都搜</option></select>',
         '  <div data-wa-showfor="web.mode=trigger,auto,always">',
         '    <select class="wa-in" data-wa-path="web.backend"><option value="searxng">SearXNG</option><option value="tavily">Tavily</option></select>',
         '    <div data-wa-showfor="web.backend=searxng">',
@@ -543,7 +540,13 @@ function init() {
         '      <input class="wa-in" type="password" data-wa-path="web.tavilyKey" placeholder="Tavily API 密钥">',
         '    </div>',
         '  </div>',
-        '  <div class="wa-note">模板与对话补全预设、搜索后端细项在 扩展面板 → 鲸鲸参谋悬窗 里配置。</div>',
+        '  <div class="wa-set-title">输出与发送</div>',
+        '  <div class="wa-row">',
+        '    <label class="wa-radio"><input type="checkbox" data-wa-path="guideOutput"> 输出引导</label>',
+        '  </div>',
+        '  <select class="wa-in" data-wa-path="sendMode"><option value="direct">发送：直接进剧情</option><option value="draft">发送：先放入输入框</option></select>',
+        '  </div>',
+        '  <div class="wa-note">模板与对话补全预设、搜索后端细项在 扩展面板 → 参谋·鲸鲸 里配置。</div>',
         '</div>'
     ].join('\n');
     document.body.appendChild(btn);
