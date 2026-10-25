@@ -157,15 +157,18 @@
     color: #7cc7ff;
 }
 
-/* 输入/结果框都是弹性项：面板拖高时按 1:2 分配增量（推演框拿大头） */
+/* 输入/结果框都是弹性项：面板拖高时按 1:2 分配增量（推演框拿大头）；
+   原生缩放把手与 flex 冲突会「原地弹回」，禁用之——尺寸统一用面板右下角 ⤡ 把手 */
 #wa-panel #wa-input {
     flex: 1 1 auto;
     min-height: 64px;
+    resize: none;
 }
 
 #wa-panel #wa-result {
     flex: 2 1 auto;
     min-height: 120px;
+    resize: none;
 }
 
 /* 移动端适配：触控目标加大（定位由 JS 计算，这里只管尺寸） */
