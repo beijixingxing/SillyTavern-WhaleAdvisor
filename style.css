@@ -157,9 +157,14 @@
     color: #7cc7ff;
 }
 
-/* 结果框为弹性项：面板拖高时自动撑满，拖矮时按最小高度并内部滚动 */
-#wa-panel #wa-result {
+/* 输入/结果框都是弹性项：面板拖高时按 1:2 分配增量（推演框拿大头） */
+#wa-panel #wa-input {
     flex: 1 1 auto;
+    min-height: 64px;
+}
+
+#wa-panel #wa-result {
+    flex: 2 1 auto;
     min-height: 120px;
 }
 
