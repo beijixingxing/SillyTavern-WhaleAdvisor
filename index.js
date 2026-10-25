@@ -506,7 +506,7 @@ function init() {
         '  </div>',
         '  <textarea class="wa-ta" id="wa-result" rows="6" placeholder="参谋的推演会落在这里，可随意编辑，点下面直接发出"></textarea>',
         '  <div id="wa-options" style="display:none;flex-direction:column;gap:6px;"></div>',
-        '  <div class="wa-row"><button class="wa-btn accent" id="wa-send">🚀 直接发送到剧情</button></div>',
+        '  <div class="wa-row" id="wa-send-row"><button class="wa-btn accent" id="wa-send">🚀 直接发送到剧情</button></div>',
         '  <div class="wa-status" id="wa-status">待机：Alt+K 唤起 · ⚙️ 快速设置</div>',
         '</div>',
         '<div class="wa-body" id="wa-view-quick" style="display:none">',
@@ -553,7 +553,7 @@ function init() {
     const $id = (id) => document.getElementById(id);
     const stateEl = $id('wa-state'), inputEl = $id('wa-input'), resultEl = $id('wa-result'),
         statusEl = $id('wa-status'), askBtn = $id('wa-ask'), refineBtn = $id('wa-refine'),
-        clearBtn = $id('wa-clear'), sendBtn = $id('wa-send'), closeBtn = $id('wa-close'),
+        clearBtn = $id('wa-clear'), sendBtn = $id('wa-send'), sendRow = $id('wa-send-row'), closeBtn = $id('wa-close'),
         gearBtn = $id('wa-gear'), backBtn = $id('wa-back'),
         viewMain = $id('wa-view-main'), viewQuick = $id('wa-view-quick'),
         quickTestBtn = $id('wa-quick-test'), quickModelsBtn = $id('wa-quick-models'),
@@ -562,11 +562,12 @@ function init() {
     function setStatus(text, cls) { statusEl.textContent = text; statusEl.className = 'wa-status' + (cls ? ' ' + cls : ''); }
     const optionsEl = $id('wa-options');
 
-    // 「问下一步」的选项化：结果里以 - 开头的行逐条变成可点击发送的按钮
+    // 「问下一步」的选项化：结果里以 - 开头的行逐条变成可点击发送的按钮；
+    // 返回是否有选项（有选项时输出框与整段发送按钮收起，选项即出口）
     function renderOptions(text) {
-        if (!optionsEl) return;
+        if (!optionsEl) return false;
         const lines = String(text || '').split('\n').map((l) => l.trim()).filter((l) => /^[-•·]\s*/.test(l));
-        if (!lines.length) { optionsEl.style.display = 'none'; optionsEl.innerHTML = ''; return; }
+        if (!lines.length) { optionsEl.style.display = 'none'; optionsEl.innerHTML = ''; return false; }
         optionsEl.style.display = 'flex';
         optionsEl.innerHTML = '';
         lines.forEach((line) => {
@@ -592,6 +593,7 @@ function init() {
             });
             optionsEl.appendChild(b);
         });
+        return true;
     }
     function updateTitle() {
         const el = $id('wa-title-text');
@@ -832,7 +834,11 @@ function init() {
             setStatus('推演中：' + (settings.channel === 'custom' ? '自定义 API' : '主 API') + (settings.presetJson ? ' + 预设「' + settings.presetName + '」' : '') + '…');
             const out = await callModel(buildTaskPrompt(kind, idea, searchBlock));
             resultEl.value = out;
-            renderOptions(out);
+            const hasOpts = renderOptions(out);
+            // 问下一步且解析出选项：输出框与整段发送按钮收起，选项按钮即出口；完善想法：显示输出框编辑
+            const collapse = kind === 'ask' && hasOpts;
+            resultEl.style.display = collapse ? 'none' : '';
+            sendRow.style.display = collapse ? 'none' : '';
             refreshState();
             setStatus('推演完成，可直接编辑发送。' + searchNote, searchNote ? '' : 'ok');
         } catch (err) {
@@ -846,6 +852,7 @@ function init() {
     clearBtn.addEventListener('click', () => {
         inputEl.value = ''; resultEl.value = '';
         renderOptions('');
+        resultEl.style.display = ''; sendRow.style.display = '';
         setStatus('已清空'); refreshState();
     });
     sendBtn.addEventListener('click', async () => {
