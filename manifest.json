@@ -1,0 +1,13 @@
+{
+    "display_name": "参谋·鲸鲸",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "beijixingxing",
+    "version": "1.3.7",
+    "homePage": "https://github.com/beijixingxing/whale-advisor",
+    "auto_update": true,
+    "minimum_client_version": "1.12.6"
+}
