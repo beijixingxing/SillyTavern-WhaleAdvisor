@@ -903,9 +903,9 @@ function init() {
             '        <button class="wa-mbtn" id="wa-preset-clear">清除预设</button>',
             '      </div>',
             '      <div class="wa-status" id="wa-preset-info"></div>',
-            '      <div class="wa-set-title">预设内容（加载后逐条显示，可直接编辑，生成时生效）</div>',
+            '      <div class="wa-set-title">预设内容（可编辑）</div>',
             '      <div id="wa-preset-entries"><div class="wa-note">未加载预设</div></div>',
-            '      <div class="wa-set-title">参谋提示词模板（支持 {角色} {状态} {剧情} {想法} {搜索}；预设带 whale_advisor 时上传会覆盖此三段）</div>',
+            '      <div class="wa-set-title">参谋提示词模板</div>',
             '      <div class="wa-note">系统预设（始终注入在消息最前：加载预设时与预设条目合并，未加载时单独作为 system）。预设 JSON 带 whale_advisor 字段（sysPreset / askTemplate / refineTemplate）时，加载即覆盖下面三段模板</div>',
             '      <textarea class="text_input" style="width:100%" rows="3" data-wa-path="sysPreset"></textarea>',
             '      <div class="wa-note">问下一步模板</div>',
@@ -1016,11 +1016,15 @@ function init() {
             box.innerHTML = '';
             if (!entries.length) { box.innerHTML = '<div class="wa-note">该预设没有生效中的提示词条目</div>'; return; }
             entries.forEach((e, idx) => {
+                const ENTRY_ZH = { main: '主提示词', jailbreak: '越狱', nsfw: '成人', enhanceDefinitions: '定义增强' };
+                const NAME_ZH = { 'Main Prompt': '主提示词', 'Jailbreak Prompt': '越狱' };
+                const zhName = ENTRY_ZH[e.identifier] || NAME_ZH[e.name] || e.name || e.identifier;
+                const zhRole = { system: '系统', user: '用户', assistant: '助手' }[e.role || 'system'] || e.role;
                 const wrap = document.createElement('div');
                 wrap.className = 'wa-pe';
                 const head = document.createElement('div');
                 head.className = 'wa-pe-head';
-                head.textContent = (idx + 1) + '. ' + (e.name || e.identifier) + '（' + (e.role || 'system') + '）';
+                head.textContent = (idx + 1) + '. ' + zhName + ' · ' + zhRole;
                 const ta = document.createElement('textarea');
                 ta.className = 'text_input';
                 ta.style.width = '100%';
