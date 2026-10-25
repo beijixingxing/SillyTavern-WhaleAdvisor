@@ -108,6 +108,14 @@
     letter-spacing: .5px;
     border-bottom: 1px solid #16233c;
     padding-bottom: 4px;
+    margin: 6px 0 2px 0;
+}
+
+/* 条件显隐容器内部也要有间距（外层 flex gap 只作用于直接子元素） */
+#wa-panel [data-wa-showfor] {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 #wa-panel .wa-body {
