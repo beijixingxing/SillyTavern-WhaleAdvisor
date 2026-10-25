@@ -903,7 +903,9 @@ function init() {
             '        <button class="wa-mbtn" id="wa-preset-clear">清除预设</button>',
             '      </div>',
             '      <div class="wa-status" id="wa-preset-info"></div>',
-            '      <div class="wa-set-title">提示词模板（无预设时的兜底，支持 {角色} {状态} {剧情} {想法} {搜索}）</div>',
+            '      <div class="wa-set-title">预设内容（加载后逐条显示，可直接编辑，生成时生效）</div>',
+            '      <div id="wa-preset-entries"><div class="wa-note">未加载预设</div></div>',
+            '      <div class="wa-set-title">参谋提示词模板（支持 {角色} {状态} {剧情} {想法} {搜索}；预设带 whale_advisor 时上传会覆盖此三段）</div>',
             '      <div class="wa-note">系统预设（始终注入在消息最前：加载预设时与预设条目合并，未加载时单独作为 system）。预设 JSON 带 whale_advisor 字段（sysPreset / askTemplate / refineTemplate）时，加载即覆盖下面三段模板</div>',
             '      <textarea class="text_input" style="width:100%" rows="3" data-wa-path="sysPreset"></textarea>',
             '      <div class="wa-note">问下一步模板</div>',
@@ -985,6 +987,51 @@ function init() {
             return applied;
         }
         function refreshPresetInfo(extra) { presetInfo.textContent = presetSummary() + (extra ? ' ｜ ' + extra : ''); }
+
+        // 预设本体条目：把实际生效的提示词逐条渲染成可编辑文本域（写入 presetJson 即时生效）
+        function renderPresetEntries() {
+            const box = q('#wa-preset-entries');
+            if (!box) return;
+            const p = settings.presetJson;
+            const prompts = Array.isArray(p?.prompts) ? p.prompts : [];
+            if (!prompts.length) { box.innerHTML = '<div class="wa-note">未加载预设</div>'; return; }
+            let order = null;
+            if (Array.isArray(p?.prompt_order)) {
+                const dummy = p.prompt_order.find((o) => o.character_id === 100001);
+                order = (dummy || p.prompt_order[0])?.order;
+            }
+            let entries;
+            if (Array.isArray(order)) {
+                const byId = new Map(prompts.map((e) => [e.identifier, e]));
+                entries = [];
+                for (const item of order) {
+                    if (!item?.enabled) continue;
+                    const e = byId.get(item.identifier);
+                    if (!e || e.marker || e.enabled === false || !e.content) continue;
+                    entries.push(e);
+                }
+            } else {
+                entries = prompts.filter((e) => !e.marker && e.enabled !== false && e.content);
+            }
+            box.innerHTML = '';
+            if (!entries.length) { box.innerHTML = '<div class="wa-note">该预设没有生效中的提示词条目</div>'; return; }
+            entries.forEach((e, idx) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'wa-pe';
+                const head = document.createElement('div');
+                head.className = 'wa-pe-head';
+                head.textContent = (idx + 1) + '. ' + (e.name || e.identifier) + '（' + (e.role || 'system') + '）';
+                const ta = document.createElement('textarea');
+                ta.className = 'text_input';
+                ta.style.width = '100%';
+                ta.rows = 3;
+                ta.value = String(e.content);
+                ta.addEventListener('input', () => { e.content = ta.value; saveSettingsDebounced(); });
+                wrap.appendChild(head);
+                wrap.appendChild(ta);
+                box.appendChild(wrap);
+            });
+        }
         loadTavernPresets().then((map) => {
             const opts = ['<option value="">— 从酒馆预设列表选择 —</option>'];
             for (const name of map.keys()) opts.push('<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>');
@@ -998,9 +1045,10 @@ function init() {
             if (!content) return;
             settings.presetName = name;
             settings.presetJson = content;
-            const applied = applyAndShowTemplates(content);
-            saveSettingsDebounced();
-            refreshPresetInfo(applied ? '✓ 预设的参谋模板已填入下方三框，可继续编辑' : '预设不含 whale_advisor 模板，三框保持当前值');
+                    const applied = applyAndShowTemplates(content);
+                    saveSettingsDebounced();
+                    refreshPresetInfo(applied ? '✓ 预设的参谋模板已填入下方三框，可继续编辑' : '预设不含 whale_advisor 模板，三框保持当前值');
+                    renderPresetEntries();
         });
         q('#wa-preset-file')?.addEventListener('change', (e) => {
             const f = e.target.files?.[0];
@@ -1014,6 +1062,7 @@ function init() {
                     const applied = applyAndShowTemplates(obj);
                     saveSettingsDebounced();
                     refreshPresetInfo(applied ? '✓ 预设的参谋模板已填入下方三框，可继续编辑' : '预设不含 whale_advisor 模板，三框保持当前值');
+                    renderPresetEntries();
                 } catch (err) {
                     presetInfo.textContent = '✗ JSON 解析失败：' + String((err && err.message) || err);
                 }
@@ -1026,8 +1075,10 @@ function init() {
             saveSettingsDebounced();
             if (presetSelect) presetSelect.value = '';
             refreshPresetInfo();
+            renderPresetEntries();
         });
         refreshPresetInfo();
+        renderPresetEntries();
 
         // 模板恢复默认
         q('#wa-tpl-reset')?.addEventListener('click', () => {

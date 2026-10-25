@@ -275,6 +275,16 @@
     color-scheme: dark;
 }
 
+#whale-advisor-settings .wa-pe {
+    margin-top: 6px;
+}
+
+#whale-advisor-settings .wa-pe-head {
+    font-size: .82rem;
+    opacity: .7;
+    margin-bottom: 2px;
+}
+
 #whale-advisor-settings .wa-set-title {
     font-weight: 700;
     font-size: 1rem;
